@@ -35,7 +35,7 @@ lxc exec $cn -- sudo sh -c "cat >> node-server/server.js" << EOF
 var http = require('http');
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
-  res.end('Hello World\nfrom inside the sethdev container\n');
+  res.end('Hello World\nfrom inside the sethdev container\n\ncreated for subdomain: $domain at sethvanwieringen.dev\n');
 }).listen(8000, '$vip');
 console.log('Server running at $vip:8000/');
 EOF
@@ -61,8 +61,18 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
+
+    real_ip_header proxy_protocol;
+    set_real_ip_from 127.0.0.1;
+    
 }
 EOF
+
+# reload the NGINX configuration on the proxy container
+lxc exec proxy -- nginx -s reload
+
+# generate a SSL cert for the new domain
+lxc exec proxy -- sudo certbot --nginx -d $domain.sethvanwieringen.dev --redirect
 
 # reload the NGINX configuration on the proxy container
 lxc exec proxy -- nginx -s reload
