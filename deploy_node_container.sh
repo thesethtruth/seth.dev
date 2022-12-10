@@ -1,15 +1,13 @@
 #!/bin/bash
 # check if we supplied the correct arguments
-if [ -z "$1" ]
-  then
-    echo "No container argument supplied"
-    exit 1
+if [ -z "$1" ]; then
+  echo "No container argument supplied"
+  exit 1
 fi
 
-if [ -z "$2" ]
-  then
-    echo "No subdomain argument supplied"
-    exit 1
+if [ -z "$2" ]; then
+  echo "No subdomain argument supplied"
+  exit 1
 fi
 
 # assign the first incoming var as the name of the container
@@ -28,10 +26,9 @@ lxc exec $cn -- sudo snap install node --channel=19/stable --classic
 # retrieve the virtual network ip adress
 vip="$(lxc exec $cn -- sudo hostname -I | cut -d ' ' -f1)"
 
-
 # make a simple node server folder
 lxc exec $cn -- sudo mkdir node-server
-lxc exec $cn -- sudo sh -c "cat >> node-server/server.js" << EOF
+lxc exec $cn -- sudo sh -c "cat >> node-server/server.js" <<EOF
 var http = require('http');
 http.createServer(function (req, res) {
   res.writeHead(200, {'Content-Type': 'text/plain'});
@@ -44,7 +41,7 @@ EOF
 lxc exec $cn -- node node-server/server.js &
 
 # add a new server block to the NGINX configuration file on the proxy container
-lxc exec proxy -- sh -c "cat >> /etc/nginx/sites-enabled/$domain.sethvanwieringen.dev" << EOF
+lxc exec proxy -- sh -c "cat >> /etc/nginx/sites-enabled/$domain.sethvanwieringen.dev" <<EOF
 
 upstream $cn {
     server $vip:8000;
